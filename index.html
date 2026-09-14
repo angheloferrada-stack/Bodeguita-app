@@ -20,7 +20,7 @@
       <span class="eyebrow">Bodega</span>
       <h1>Vestuario Folclor</h1>
     </div>
-    <a class="version-pill" href="changelog.html">v1.1</a>
+    <a class="version-pill" href="changelog.html">v1.2</a>
   </div>
 </header>
 
@@ -55,18 +55,31 @@
       <button type="button" id="toggle-pilas-manager" class="pilas-toggle">⚙ Gestionar pilas</button>
       <div id="pilas-manager-body" class="pilas-manager-body">
         <div class="pila-add-row">
-          <input id="nueva-pila-nombre" type="text" placeholder="Nombre de la pila nueva (ej: Pared izquierda 1)">
-          <button id="btn-agregar-pila">Agregar</button>
+          <input id="nueva-pila-nombre" type="text" placeholder="Nombre de la pila (ej: Pared izquierda 1)">
         </div>
+        <div class="pila-add-pos">
+          <label>Columna <input id="nueva-pila-col" type="number" min="1" max="6" value="1"></label>
+          <label>Fila <input id="nueva-pila-row" type="number" min="1" max="8" value="1"></label>
+          <label>Ancho <input id="nueva-pila-w" type="number" min="1" max="6" value="1"></label>
+          <label>Alto <input id="nueva-pila-h" type="number" min="1" max="8" value="1"></label>
+        </div>
+        <button id="btn-agregar-pila" class="pila-add-btn">Agregar pila</button>
+        <p class="pilas-hint">La posición es aproximada: mira tu plano real y calcula en qué columna/fila de una grilla de 6×8 cae cada pila. "Ancho" y "Alto" son cuántas celdas ocupa (ej: una pila angosta contra la pared = ancho 1).</p>
         <div id="lista-pilas-admin" class="lista-pilas-admin"></div>
       </div>
     </div>
 
     <div class="section-title">
-      <h2>Mapa de la bodega</h2>
+      <h2>Plano de la bodega</h2>
+    </div>
+    <div id="plano-grid" class="plano-grid"></div>
+    <p class="mapa-caption" style="margin-top:6px;">Toca un bloque del plano para ver el detalle de esa pila más abajo.</p>
+
+    <div class="section-title">
+      <h2>Detalle por pila</h2>
     </div>
     <div id="mapa-contenido"></div>
-    <p class="mapa-caption">Escribe arriba para ubicar una caja: se resalta el nivel exacto dentro de su pila y el resto se apaga. Las cajas sin pila asignada aparecen en "Sin ubicar".</p>
+    <p class="mapa-caption">Escribe arriba para ubicar una caja: se resalta en el plano y en el nivel exacto dentro de su pila. Las cajas sin pila asignada aparecen en "Sin ubicar".</p>
   </section>
 
   <!-- ===================== VISTA: MOVIMIENTOS ===================== -->
