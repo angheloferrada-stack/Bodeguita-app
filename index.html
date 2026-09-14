@@ -20,7 +20,7 @@
       <span class="eyebrow">Bodega</span>
       <h1>Vestuario Folclor</h1>
     </div>
-    <a class="version-pill" href="changelog.html">v1.0</a>
+    <a class="version-pill" href="changelog.html">v1.1</a>
   </div>
 </header>
 
@@ -50,11 +50,23 @@
       <span class="icon">⌕</span>
       <input id="buscar-mapa" type="text" placeholder="Ej: Cayambe, 16, Veracruz…" autocomplete="off">
     </div>
+
+    <div class="pilas-manager">
+      <button type="button" id="toggle-pilas-manager" class="pilas-toggle">⚙ Gestionar pilas</button>
+      <div id="pilas-manager-body" class="pilas-manager-body">
+        <div class="pila-add-row">
+          <input id="nueva-pila-nombre" type="text" placeholder="Nombre de la pila nueva (ej: Pared izquierda 1)">
+          <button id="btn-agregar-pila">Agregar</button>
+        </div>
+        <div id="lista-pilas-admin" class="lista-pilas-admin"></div>
+      </div>
+    </div>
+
     <div class="section-title">
       <h2>Mapa de la bodega</h2>
     </div>
-    <div class="mapa-grid" id="mapa-grid"></div>
-    <p class="mapa-caption">Escribe arriba para ubicar una caja: se resalta en la grilla y el resto se apaga, igual que buscarla físicamente entre el resto de las cajas.</p>
+    <div id="mapa-contenido"></div>
+    <p class="mapa-caption">Escribe arriba para ubicar una caja: se resalta el nivel exacto dentro de su pila y el resto se apaga. Las cajas sin pila asignada aparecen en "Sin ubicar".</p>
   </section>
 
   <!-- ===================== VISTA: MOVIMIENTOS ===================== -->
@@ -128,8 +140,18 @@
       <input id="caja-categoria" type="text" placeholder="Ej: Ecuador, Tirana, Rapa">
     </div>
     <div class="field">
-      <label for="caja-ubicacion">Ubicación en bodega</label>
-      <input id="caja-ubicacion" type="text" placeholder="Ej: Estante izquierdo, pila 3">
+      <label for="caja-pila">Pila</label>
+      <select id="caja-pila">
+        <option value="">Sin asignar</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="caja-nivel">Nivel (1 = la de más abajo)</label>
+      <input id="caja-nivel" type="number" min="1" step="1" placeholder="Ej: 3">
+    </div>
+    <div class="field">
+      <label for="caja-ubicacion">Notas de ubicación (opcional)</label>
+      <input id="caja-ubicacion" type="text" placeholder="Ej: detrás de las plumas, con cierre">
     </div>
     <div class="field">
       <label for="caja-contenido">Contenido</label>
