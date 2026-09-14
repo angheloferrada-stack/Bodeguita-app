@@ -5,12 +5,12 @@ const CORE_ASSETS = [
   "./",
   "./index.html",
   "./changelog.html",
-  "./css/style.css",
-  "./js/app.js",
-  "./js/firebase-config.js",
+  "./style.css",
+  "./app.js",
+  "./firebase-config.js",
   "./manifest.json",
-  "./icons/icon-192.png",
-  "./icons/icon-512.png"
+  "./icon-192.png",
+  "./icon-512.png"
 ];
 
 self.addEventListener("install", (event) => {
