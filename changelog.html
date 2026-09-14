@@ -17,7 +17,7 @@
       <span class="eyebrow">Bodega</span>
       <h1>Changelog</h1>
     </div>
-    <span class="version-pill">v1.3</span>
+    <span class="version-pill">v1.4</span>
   </div>
 </header>
 
@@ -47,6 +47,16 @@
   </div>
 
   <div class="changelog-entry">
+    <span class="v-num">v1.2</span><span class="v-date">Plano visual</span>
+    <ul>
+      <li>Nuevo plano de la bodega: cada pila se dibuja como un bloque de color en una grilla de 6×8 celdas.</li>
+      <li>Le asignas a cada pila su columna, fila, ancho y alto mirando tu plano real, desde "⚙ Gestionar pilas".</li>
+      <li>Al buscar una caja, se resalta el bloque de su pila en el plano y se atenúa el resto.</li>
+      <li>Tocar un bloque del plano salta directo al detalle de esa pila (sus niveles).</li>
+    </ul>
+  </div>
+
+  <div class="changelog-entry">
     <span class="v-num">v1.3</span><span class="v-date">Ítems por caja y trazabilidad de movimientos</span>
     <ul>
       <li>Las cajas ahora guardan una lista de ítems con cantidad (ej: "6 hamis"), editable desde el modal de caja.</li>
@@ -60,17 +70,16 @@
   </div>
 
   <div class="changelog-entry">
-    <span class="v-num">v1.2</span><span class="v-date">Plano visual</span>
+    <span class="v-num">v1.4</span><span class="v-date">Retiros con varios ítems</span>
     <ul>
-      <li>Nuevo plano de la bodega: cada pila se dibuja como un bloque de color en una grilla de 6×8 celdas.</li>
-      <li>Le asignas a cada pila su columna, fila, ancho y alto mirando tu plano real, desde "⚙ Gestionar pilas".</li>
-      <li>Al buscar una caja, se resalta el bloque de su pila en el plano y se atenúa el resto.</li>
-      <li>Tocar un bloque del plano salta directo al detalle de esa pila (sus niveles).</li>
+      <li>El formulario de Movimientos ahora permite agregar varias filas de ítem + cantidad dentro de un mismo retiro, con el botón "+ Agregar otro ítem".</li>
+      <li>Ejemplo: una persona llevándose 5 botas, 6 rebozos y 4 sombreros de "México Mujeres" queda registrado como <strong>un solo movimiento</strong> con tres líneas, cada una con su propio estado (pendiente/parcial/devuelto) y su propio botón "Actualizar" para devolver o traspasar esa prenda específica sin afectar las otras.</li>
+      <li>Se corrigió un error donde quedaba una llamada a una función que ya no existía en el código de Movimientos.</li>
     </ul>
   </div>
 
   <div class="changelog-entry">
-    <span class="v-num">Próximo</span><span class="v-date">Ideas para v1.4</span>
+    <span class="v-num">Próximo</span><span class="v-date">Ideas para v1.5</span>
     <ul>
       <li>Login simple para vestuaristas (Firebase Auth) y reglas de Firestore más estrictas.</li>
       <li>Importar el inventario actual desde la planilla existente.</li>
