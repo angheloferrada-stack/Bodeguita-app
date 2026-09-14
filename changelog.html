@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Changelog — Bodega Folclor</title>
+<meta name="theme-color" content="#17162A">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-row">
+    <div class="brand">
+      <span class="eyebrow">Bodega</span>
+      <h1>Changelog</h1>
+    </div>
+    <span class="version-pill">v1.0</span>
+  </div>
+</header>
+
+<main>
+  <a class="back-link" href="index.html">← Volver a la app</a>
+
+  <div class="changelog-entry">
+    <span class="v-num">v1.0</span><span class="v-date">Primera versión</span>
+    <ul>
+      <li>Inventario de cajas con número, nombre, categoría, ubicación y contenido.</li>
+      <li>Búsqueda de cajas por número, nombre o contenido.</li>
+      <li>Vista de mapa: resalta la caja buscada y atenúa el resto, para ubicarla rápido dentro de la bodega.</li>
+      <li>Registro de movimientos: quién se llevó o devolvió vestuario, con historial en tiempo real.</li>
+      <li>Datos sincronizados con Firebase Firestore — cualquiera con el link ve la bodega actualizada.</li>
+      <li>Instalable como app en el celular (PWA), funciona con caché básico sin conexión.</li>
+    </ul>
+  </div>
+
+  <div class="changelog-entry">
+    <span class="v-num">Próximo</span><span class="v-date">Ideas para v1.1</span>
+    <ul>
+      <li>Login simple para vestuaristas (Firebase Auth) y reglas de Firestore más estrictas.</li>
+      <li>Editar/eliminar movimientos y marcar un movimiento como "cerrado" cuando vuelve la prenda.</li>
+      <li>Importar el inventario actual desde la planilla existente.</li>
+      <li>Fotos por caja.</li>
+    </ul>
+  </div>
+</main>
+
+</body>
+</html>

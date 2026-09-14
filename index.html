@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bodega Folclor</title>
+<meta name="theme-color" content="#17162A">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-row">
+    <div class="brand">
+      <span class="eyebrow">Bodega</span>
+      <h1>Vestuario Folclor</h1>
+    </div>
+    <a class="version-pill" href="changelog.html">v1.0</a>
+  </div>
+</header>
+
+<main>
+
+  <!-- ===================== VISTA: INVENTARIO ===================== -->
+  <section id="view-inventario" class="view active">
+    <div class="search-wrap">
+      <span class="icon">⌕</span>
+      <input id="buscar-inventario" type="text" placeholder="Buscar caja, nombre o contenido…" autocomplete="off">
+    </div>
+    <div class="section-title">
+      <h2>Cajas registradas</h2>
+      <span class="count-badge" id="conteo-cajas">0</span>
+    </div>
+    <div class="caja-list" id="lista-cajas">
+      <div class="empty-state">
+        <span class="glyph">📦</span>
+        Conectando con la bodega…
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== VISTA: MAPA ===================== -->
+  <section id="view-mapa" class="view">
+    <div class="search-wrap">
+      <span class="icon">⌕</span>
+      <input id="buscar-mapa" type="text" placeholder="Ej: Cayambe, 16, Veracruz…" autocomplete="off">
+    </div>
+    <div class="section-title">
+      <h2>Mapa de la bodega</h2>
+    </div>
+    <div class="mapa-grid" id="mapa-grid"></div>
+    <p class="mapa-caption">Escribe arriba para ubicar una caja: se resalta en la grilla y el resto se apaga, igual que buscarla físicamente entre el resto de las cajas.</p>
+  </section>
+
+  <!-- ===================== VISTA: MOVIMIENTOS ===================== -->
+  <section id="view-movimientos" class="view">
+    <div class="mov-form">
+      <div class="tipo-toggle">
+        <button type="button" id="btn-retiro" class="on retiro">Se llevó algo</button>
+        <button type="button" id="btn-devolucion" class="devolucion">Devolvió algo</button>
+      </div>
+      <div>
+        <label for="mov-persona">Vestuarista</label>
+        <input id="mov-persona" type="text" placeholder="Nombre de quien retira o devuelve">
+      </div>
+      <div>
+        <label for="mov-detalle">Qué se llevó / devolvió</label>
+        <textarea id="mov-detalle" placeholder="Ej: 5 hamis (caja 16), 2 pareu"></textarea>
+      </div>
+      <div>
+        <label for="mov-caja">Caja relacionada (opcional)</label>
+        <input id="mov-caja" type="text" placeholder="Ej: 16 - Veracruz Damas">
+      </div>
+      <button class="mov-submit" id="mov-guardar">Registrar movimiento</button>
+    </div>
+
+    <div class="section-title">
+      <h2>Historial reciente</h2>
+      <span class="count-badge" id="conteo-mov">0</span>
+    </div>
+    <div id="lista-movimientos">
+      <div class="empty-state">
+        <span class="glyph">🔄</span>
+        Sin movimientos todavía.
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<button class="fab" id="fab-nueva-caja" title="Agregar caja">+</button>
+
+<nav class="tabbar">
+  <button class="tab-btn active" data-view="inventario">
+    <span class="glyph">📦</span>
+    Inventario
+  </button>
+  <button class="tab-btn" data-view="mapa">
+    <span class="glyph">🗺️</span>
+    Mapa
+  </button>
+  <button class="tab-btn" data-view="movimientos">
+    <span class="glyph">🔄</span>
+    Movimientos
+  </button>
+</nav>
+
+<!-- ===================== MODAL: CAJA ===================== -->
+<div class="modal-backdrop" id="modal-caja">
+  <div class="modal">
+    <h3 id="modal-caja-titulo">Nueva caja</h3>
+    <input type="hidden" id="caja-id">
+    <div class="field">
+      <label for="caja-numero">Número</label>
+      <input id="caja-numero" type="text" placeholder="Ej: 16">
+    </div>
+    <div class="field">
+      <label for="caja-nombre">Nombre</label>
+      <input id="caja-nombre" type="text" placeholder="Ej: Cayambe / Veracruz Damas">
+    </div>
+    <div class="field">
+      <label for="caja-categoria">Categoría / país</label>
+      <input id="caja-categoria" type="text" placeholder="Ej: Ecuador, Tirana, Rapa">
+    </div>
+    <div class="field">
+      <label for="caja-ubicacion">Ubicación en bodega</label>
+      <input id="caja-ubicacion" type="text" placeholder="Ej: Estante izquierdo, pila 3">
+    </div>
+    <div class="field">
+      <label for="caja-contenido">Contenido</label>
+      <textarea id="caja-contenido" placeholder="Ej: 9 velas, 12 peinetas, 8 abanicos…"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="cancel" id="modal-caja-cancelar">Cancelar</button>
+      <button class="save" id="modal-caja-guardar">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Firebase (compat SDK, sin build step, listo para GitHub Pages) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
