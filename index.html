@@ -58,13 +58,13 @@
           <input id="nueva-pila-nombre" type="text" placeholder="Nombre de la pila (ej: Pared izquierda 1)">
         </div>
         <div class="pila-add-pos">
-          <label>Columna <input id="nueva-pila-col" type="number" min="1" max="6" value="1"></label>
-          <label>Fila <input id="nueva-pila-row" type="number" min="1" max="8" value="1"></label>
-          <label>Ancho <input id="nueva-pila-w" type="number" min="1" max="6" value="1"></label>
-          <label>Alto <input id="nueva-pila-h" type="number" min="1" max="8" value="1"></label>
+          <label>Columna <input id="nueva-pila-col" type="number" min="1" max="5" value="1"></label>
+          <label>Fila <input id="nueva-pila-row" type="number" min="1" max="6" value="1"></label>
+          <label>Ancho <input id="nueva-pila-w" type="number" min="1" max="5" value="1"></label>
+          <label>Alto <input id="nueva-pila-h" type="number" min="1" max="6" value="1"></label>
         </div>
         <button id="btn-agregar-pila" class="pila-add-btn">Agregar pila</button>
-        <p class="pilas-hint">La posición es aproximada: mira tu plano real y calcula en qué columna/fila de una grilla de 6×8 cae cada pila. "Ancho" y "Alto" son cuántas celdas ocupa (ej: una pila angosta contra la pared = ancho 1).</p>
+        <p class="pilas-hint">La posición es aproximada: mira tu plano real y calcula en qué columna/fila de una grilla de 5×6 cae cada pila. "Ancho" y "Alto" son cuántas celdas ocupa (ej: una pila angosta contra la pared = ancho 1).</p>
         <div id="lista-pilas-admin" class="lista-pilas-admin"></div>
       </div>
     </div>
@@ -85,23 +85,31 @@
   <!-- ===================== VISTA: MOVIMIENTOS ===================== -->
   <section id="view-movimientos" class="view">
     <div class="mov-form">
-      <div class="tipo-toggle">
-        <button type="button" id="btn-retiro" class="on retiro">Se llevó algo</button>
-        <button type="button" id="btn-devolucion" class="devolucion">Devolvió algo</button>
+      <div>
+        <label for="mov-registrador">Vestuarista que registra</label>
+        <input id="mov-registrador" type="text" placeholder="Tu nombre">
       </div>
       <div>
-        <label for="mov-persona">Vestuarista</label>
-        <input id="mov-persona" type="text" placeholder="Nombre de quien retira o devuelve">
+        <label for="mov-persona">¿Quién se lo llevó?</label>
+        <input id="mov-persona" type="text" placeholder="Nombre de quien retira">
       </div>
       <div>
-        <label for="mov-detalle">Qué se llevó / devolvió</label>
-        <textarea id="mov-detalle" placeholder="Ej: 5 hamis (caja 16), 2 pareu"></textarea>
+        <label for="mov-caja">Caja</label>
+        <select id="mov-caja">
+          <option value="">Selecciona una caja…</option>
+        </select>
       </div>
       <div>
-        <label for="mov-caja">Caja relacionada (opcional)</label>
-        <input id="mov-caja" type="text" placeholder="Ej: 16 - Veracruz Damas">
+        <label for="mov-item">Ítem</label>
+        <select id="mov-item" disabled>
+          <option value="">Elige primero una caja</option>
+        </select>
       </div>
-      <button class="mov-submit" id="mov-guardar">Registrar movimiento</button>
+      <div>
+        <label for="mov-cantidad">Cantidad</label>
+        <input id="mov-cantidad" type="number" min="1" step="1" placeholder="Ej: 2">
+      </div>
+      <button class="mov-submit" id="mov-guardar">Registrar retiro</button>
     </div>
 
     <div class="section-title">
@@ -167,12 +175,56 @@
       <input id="caja-ubicacion" type="text" placeholder="Ej: detrás de las plumas, con cierre">
     </div>
     <div class="field">
-      <label for="caja-contenido">Contenido</label>
-      <textarea id="caja-contenido" placeholder="Ej: 9 velas, 12 peinetas, 8 abanicos…"></textarea>
+      <label for="caja-contenido">Notas de contenido (opcional)</label>
+      <textarea id="caja-contenido" placeholder="Ej: revisar cierres, con bolsa aparte…"></textarea>
+    </div>
+    <div class="field">
+      <label>Ítems dentro de la caja</label>
+      <div id="items-editor" class="items-editor"></div>
+      <button type="button" id="btn-agregar-item" class="item-add-btn">+ Agregar ítem</button>
     </div>
     <div class="modal-actions">
       <button class="cancel" id="modal-caja-cancelar">Cancelar</button>
       <button class="save" id="modal-caja-guardar">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MODAL: CONFIRMAR ===================== -->
+<div class="modal-backdrop" id="modal-confirm">
+  <div class="confirm-modal">
+    <p id="confirm-mensaje">¿Confirmar esta acción?</p>
+    <div class="modal-actions">
+      <button class="cancel" id="confirm-cancelar">Cancelar</button>
+      <button class="save danger" id="confirm-aceptar">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MODAL: RESOLVER MOVIMIENTO ===================== -->
+<div class="modal-backdrop" id="modal-resolver">
+  <div class="modal">
+    <h3>Actualizar movimiento</h3>
+    <input type="hidden" id="resolver-mov-id">
+    <div class="resolver-tipo-toggle">
+      <button type="button" id="resolver-btn-devolver" class="on">Devolvió</button>
+      <button type="button" id="resolver-btn-traspaso">Se lo pasó a otra persona</button>
+    </div>
+    <div class="field">
+      <label for="resolver-cantidad">Cantidad</label>
+      <input id="resolver-cantidad" type="number" min="1" step="1">
+    </div>
+    <div class="field" id="resolver-persona-destino-wrap" style="display:none;">
+      <label for="resolver-persona-destino">¿A quién se lo pasó?</label>
+      <input id="resolver-persona-destino" type="text" placeholder="Nombre de quien lo recibe">
+    </div>
+    <div class="field">
+      <label for="resolver-registrador">Vestuarista que registra este cambio</label>
+      <input id="resolver-registrador" type="text" placeholder="Tu nombre">
+    </div>
+    <div class="modal-actions">
+      <button class="cancel" id="resolver-cancelar">Cancelar</button>
+      <button class="save" id="resolver-guardar">Guardar</button>
     </div>
   </div>
 </div>
