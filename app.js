@@ -39,6 +39,15 @@ function fechaLegible(ts) {
   return d.toLocaleString("es-CL", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
 }
 
+function cajaCoincide(c, term) {
+  return term && [c.numero, c.nombre, c.categoria, c.ubicacion, c.contenido].map(normaliza).some((v) => v.includes(term));
+}
+
+const PALETA_PILAS = ["#E8A93C", "#D63384", "#2E9E83", "#4C6EF5", "#E0563F", "#63993D", "#8B5CF6", "#0EA5E9", "#C2793C", "#B23A8C"];
+function colorPila(index) {
+  return PALETA_PILAS[index % PALETA_PILAS.length];
+}
+
 // ---------------------------------------------------------------- Tabs
 document.querySelectorAll(".tab-btn").forEach((btn) => {
   btn.addEventListener("click", () => {
@@ -194,16 +203,21 @@ document.getElementById("toggle-pilas-manager").addEventListener("click", () => 
 });
 
 document.getElementById("btn-agregar-pila").addEventListener("click", () => {
-  const input = document.getElementById("nueva-pila-nombre");
-  const nombre = input.value.trim();
+  const nombreInput = document.getElementById("nueva-pila-nombre");
+  const nombre = nombreInput.value.trim();
   if (!nombre) {
     toast("Ponle un nombre a la pila");
     return;
   }
+  const col = parseInt(document.getElementById("nueva-pila-col").value, 10) || 1;
+  const row = parseInt(document.getElementById("nueva-pila-row").value, 10) || 1;
+  const w = parseInt(document.getElementById("nueva-pila-w").value, 10) || 1;
+  const h = parseInt(document.getElementById("nueva-pila-h").value, 10) || 1;
+
   db.collection("pilas")
-    .add({ nombre, creado: firebase.firestore.FieldValue.serverTimestamp() })
+    .add({ nombre, col, row, w, h, creado: firebase.firestore.FieldValue.serverTimestamp() })
     .then(() => {
-      input.value = "";
+      nombreInput.value = "";
       toast("Pila creada");
     });
 });
@@ -217,16 +231,34 @@ function renderListaPilasAdmin() {
   el.innerHTML = pilas
     .map(
       (p) => `
-      <div class="pila-admin-row">
-        <span>${p.nombre}</span>
-        <button data-id="${p.id}">Eliminar</button>
+      <div class="pila-admin-row" data-id="${p.id}">
+        <span class="pila-admin-nombre">${p.nombre}</span>
+        <div class="pila-admin-pos">
+          <label>Col <input type="number" min="1" max="6" class="pos-col" value="${p.col || 1}"></label>
+          <label>Fila <input type="number" min="1" max="8" class="pos-row" value="${p.row || 1}"></label>
+          <label>Ancho <input type="number" min="1" max="6" class="pos-w" value="${p.w || 1}"></label>
+          <label>Alto <input type="number" min="1" max="8" class="pos-h" value="${p.h || 1}"></label>
+        </div>
+        <button class="pila-eliminar" data-id="${p.id}">Eliminar</button>
       </div>`
     )
     .join("");
 }
 
+document.getElementById("lista-pilas-admin").addEventListener("change", (e) => {
+  const fila = e.target.closest(".pila-admin-row[data-id]");
+  if (!fila || !e.target.matches(".pos-col, .pos-row, .pos-w, .pos-h")) return;
+  const id = fila.dataset.id;
+  db.collection("pilas").doc(id).update({
+    col: parseInt(fila.querySelector(".pos-col").value, 10) || 1,
+    row: parseInt(fila.querySelector(".pos-row").value, 10) || 1,
+    w: parseInt(fila.querySelector(".pos-w").value, 10) || 1,
+    h: parseInt(fila.querySelector(".pos-h").value, 10) || 1
+  }).then(() => toast("Posición actualizada"));
+});
+
 document.getElementById("lista-pilas-admin").addEventListener("click", (e) => {
-  const btn = e.target.closest("button[data-id]");
+  const btn = e.target.closest("button.pila-eliminar");
   if (!btn) return;
   const pila = pilas.find((p) => p.id === btn.dataset.id);
   const enUso = cajas.some((c) => c.pilaId === btn.dataset.id);
@@ -239,7 +271,46 @@ document.getElementById("lista-pilas-admin").addEventListener("click", (e) => {
 });
 
 // ============================================================================
-// MAPA — torres por pila
+// PLANO — vista visual tipo planta, con posición aproximada de cada pila
+// ============================================================================
+function renderPlano() {
+  const term = normaliza(document.getElementById("buscar-mapa").value.trim());
+  const grid = document.getElementById("plano-grid");
+
+  const conPosicion = pilas;
+  if (!conPosicion.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;grid-row:1/-1;"><span class="glyph">🗺️</span>Crea pilas en "⚙ Gestionar pilas" y dales una posición para ver el plano.</div>`;
+    return;
+  }
+
+  grid.innerHTML = conPosicion
+    .map((p, i) => {
+      const cajasPila = cajas.filter((c) => c.pilaId === p.id);
+      const algunMatch = term ? cajasPila.some((c) => cajaCoincide(c, term)) : false;
+      const dim = term && !algunMatch;
+      const col = Math.min(6, Math.max(1, p.col || 1));
+      const row = Math.min(8, Math.max(1, p.row || 1));
+      const w = Math.max(1, Math.min(7 - col, p.w || 1));
+      const h = Math.max(1, Math.min(9 - row, p.h || 1));
+      return `
+        <div class="plano-tile ${term && algunMatch ? "match" : ""} ${dim ? "dim" : ""}"
+             style="grid-column:${col} / span ${w}; grid-row:${row} / span ${h}; background:${colorPila(i)};"
+             data-id="${p.id}">
+          ${p.nombre}
+        </div>`;
+    })
+    .join("");
+}
+
+document.getElementById("plano-grid").addEventListener("click", (e) => {
+  const tile = e.target.closest(".plano-tile[data-id]");
+  if (!tile) return;
+  const bloque = document.getElementById("torre-" + tile.dataset.id);
+  if (bloque) bloque.scrollIntoView({ behavior: "smooth", block: "center" });
+});
+
+// ============================================================================
+// MAPA — torres por pila (detalle debajo del plano)
 // ============================================================================
 function renderMapa() {
   const term = normaliza(document.getElementById("buscar-mapa").value.trim());
@@ -250,22 +321,18 @@ function renderMapa() {
     return;
   }
 
-  function esMatch(c) {
-    return term && [c.numero, c.nombre, c.categoria, c.ubicacion, c.contenido].map(normaliza).some((v) => v.includes(term));
-  }
-
   const bloques = [];
 
   pilas.forEach((pila) => {
     const cajasPila = cajas.filter((c) => c.pilaId === pila.id);
     const maxNivel = Math.max(1, ...cajasPila.map((c) => c.nivel || 1));
-    const algunMatch = term ? cajasPila.some(esMatch) : true;
+    const algunMatch = term ? cajasPila.some((c) => cajaCoincide(c, term)) : true;
 
     let torreHtml = "";
     for (let n = 1; n <= maxNivel; n++) {
       const c = cajasPila.find((x) => x.nivel === n);
       if (c) {
-        const match = esMatch(c);
+        const match = cajaCoincide(c, term);
         const dim = term && !match;
         torreHtml += `
           <div class="nivel-slot">
@@ -284,7 +351,7 @@ function renderMapa() {
     }
 
     bloques.push(`
-      <div class="pila-bloque ${term && !algunMatch ? "dim" : ""}">
+      <div class="pila-bloque ${term && !algunMatch ? "dim" : ""}" id="torre-${pila.id}">
         <div class="pila-titulo"><span class="glyph">▤</span>${pila.nombre} <span style="opacity:.5">(${cajasPila.length} caja${cajasPila.length === 1 ? "" : "s"})</span></div>
         <div class="pila-torre">${torreHtml}</div>
       </div>`);
@@ -293,10 +360,10 @@ function renderMapa() {
   // Cajas sin pila asignada
   const sinPila = cajas.filter((c) => !c.pilaId || !pilas.some((p) => p.id === c.pilaId));
   if (sinPila.length) {
-    const algunMatch = term ? sinPila.some(esMatch) : true;
+    const algunMatch = term ? sinPila.some((c) => cajaCoincide(c, term)) : true;
     const items = sinPila
       .map((c) => {
-        const match = esMatch(c);
+        const match = cajaCoincide(c, term);
         const dim = term && !match;
         return `
           <div class="nivel-slot">
@@ -322,7 +389,10 @@ function renderMapa() {
   cont.innerHTML = bloques.join("");
 }
 
-document.getElementById("buscar-mapa").addEventListener("input", renderMapa);
+document.getElementById("buscar-mapa").addEventListener("input", () => {
+  renderMapa();
+  renderPlano();
+});
 
 // ============================================================================
 // MOVIMIENTOS
@@ -396,6 +466,7 @@ db.collection("cajas")
       cajas = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
       renderCajas();
       renderMapa();
+      renderPlano();
     },
     (err) => {
       console.error(err);
@@ -422,6 +493,7 @@ db.collection("pilas")
       pilas = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
       renderListaPilasAdmin();
       renderMapa();
+      renderPlano();
       renderCajas();
     },
     (err) => console.error(err)
