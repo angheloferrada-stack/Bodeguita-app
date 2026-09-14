@@ -1,5 +1,5 @@
 // Bump CACHE_NAME on every release so old assets get replaced.
-const CACHE_NAME = "bodega-folclor-v1.0.0";
+const CACHE_NAME = "bodega-folclor-v1.1.0";
 
 const CORE_ASSETS = [
   "./",
