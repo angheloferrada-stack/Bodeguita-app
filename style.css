@@ -417,22 +417,142 @@ main {
 
 .lista-pilas-admin { display: flex; flex-direction: column; gap: 6px; }
 
+.pila-add-pos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.pila-add-pos label {
+  font-size: 11.5px;
+  color: var(--text-dim);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.pila-add-pos input {
+  width: 54px;
+  background: var(--bg-elev-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--text);
+  padding: 7px 8px;
+  font-size: 13px;
+}
+
+.pila-add-btn {
+  width: 100%;
+  background: var(--marigold);
+  color: var(--bg);
+  border: none;
+  border-radius: 9px;
+  padding: 10px;
+  font-weight: 700;
+  font-size: 13.5px;
+  margin-bottom: 10px;
+}
+
+.pilas-hint {
+  font-size: 11.5px;
+  color: var(--text-dim);
+  line-height: 1.5;
+  margin: 0 0 12px;
+}
+
 .pila-admin-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   font-size: 13px;
   color: var(--text-dim);
-  padding: 7px 9px;
+  padding: 9px;
   background: var(--bg-elev-2);
   border-radius: 8px;
+  flex-wrap: wrap;
+  gap: 8px 10px;
 }
 
-.pila-admin-row button {
+.pila-admin-row > button.pila-eliminar {
   background: none;
   border: none;
   color: var(--danger);
   font-size: 12px;
+}
+
+.pila-admin-row .pila-admin-nombre {
+  flex: 1 1 100%;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.pila-admin-row .pila-admin-pos {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex: 1;
+}
+
+.pila-admin-row .pila-admin-pos label {
+  font-size: 10px;
+  color: var(--text-dim);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pila-admin-row .pila-admin-pos input {
+  width: 40px;
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--text);
+  padding: 4px 5px;
+  font-size: 12px;
+}
+
+/* ---------- Plano visual ---------- */
+.plano-grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  grid-template-rows: repeat(8, 1fr);
+  gap: 4px;
+  aspect-ratio: 6 / 8;
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 6px;
+}
+
+.plano-tile {
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(0,0,0,0.7);
+  padding: 4px;
+  line-height: 1.25;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: opacity .2s ease, border-color .2s ease, transform .15s ease;
+  overflow: hidden;
+}
+
+.plano-tile.dim { opacity: 0.18; }
+.plano-tile.match {
+  border-color: var(--text);
+  transform: scale(1.03);
+  z-index: 2;
+}
+
+.plano-sin-pos {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-top: 8px;
 }
 
 /* ---------- Mapa: torres de pilas ---------- */
