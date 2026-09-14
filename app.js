@@ -7,7 +7,6 @@
 let cajas = [];
 let movimientos = [];
 let pilas = [];
-let tipoMovActual = "retiro";
 
 // ---------------------------------------------------------------- Registrar SW
 if ("serviceWorker" in navigator) {
@@ -46,6 +45,30 @@ function cajaCoincide(c, term) {
 const PALETA_PILAS = ["#E8A93C", "#D63384", "#2E9E83", "#4C6EF5", "#E0563F", "#63993D", "#8B5CF6", "#0EA5E9", "#C2793C", "#B23A8C"];
 function colorPila(index) {
   return PALETA_PILAS[index % PALETA_PILAS.length];
+}
+
+// ---------------------------------------------------------------- Confirmación genérica
+const modalConfirm = document.getElementById("modal-confirm");
+function pedirConfirmacion(mensaje) {
+  return new Promise((resolve) => {
+    document.getElementById("confirm-mensaje").textContent = mensaje;
+    modalConfirm.classList.add("open");
+
+    const aceptar = document.getElementById("confirm-aceptar");
+    const cancelar = document.getElementById("confirm-cancelar");
+
+    function limpiar(resultado) {
+      modalConfirm.classList.remove("open");
+      aceptar.removeEventListener("click", onAceptar);
+      cancelar.removeEventListener("click", onCancelar);
+      resolve(resultado);
+    }
+    function onAceptar() { limpiar(true); }
+    function onCancelar() { limpiar(false); }
+
+    aceptar.addEventListener("click", onAceptar);
+    cancelar.addEventListener("click", onCancelar);
+  });
 }
 
 // ---------------------------------------------------------------- Tabs
@@ -107,6 +130,11 @@ function renderCajas() {
           ${c.categoria ? `<span class="caja-tag">${c.categoria}</span>` : ""}
         </div>
         ${c.contenido ? `<div class="caja-contenido">${c.contenido}</div>` : ""}
+        ${
+          Array.isArray(c.items) && c.items.length
+            ? `<div class="caja-items">${c.items.map((it) => `<span class="item-chip"><b>${it.cantidad}</b> ${it.nombre}</span>`).join("")}</div>`
+            : ""
+        }
         <div class="caja-actions">
           <button data-action="editar" data-id="${c.id}">Editar</button>
           <button data-action="eliminar" data-id="${c.id}" class="danger">Eliminar</button>
@@ -127,9 +155,9 @@ document.getElementById("lista-cajas").addEventListener("click", (e) => {
 
   if (btn.dataset.action === "editar") abrirModalCaja(caja);
   if (btn.dataset.action === "eliminar") {
-    if (confirm(`¿Eliminar la caja "${caja.nombre || caja.numero}"? Esta acción no se puede deshacer.`)) {
-      db.collection("cajas").doc(id).delete().then(() => toast("Caja eliminada"));
-    }
+    pedirConfirmacion(`¿Eliminar la caja "${caja.nombre || caja.numero}"? Esta acción no se puede deshacer.`).then((ok) => {
+      if (ok) db.collection("cajas").doc(id).delete().then(() => toast("Caja eliminada"));
+    });
   }
 });
 
@@ -145,6 +173,30 @@ function poblarSelectPilas() {
   sel.value = actual;
 }
 
+function filaItem(item) {
+  const row = document.createElement("div");
+  row.className = "item-row";
+  row.innerHTML = `
+    <input type="text" class="item-nombre" placeholder="Ej: hamis" value="${item ? item.nombre.replace(/"/g, "&quot;") : ""}">
+    <input type="number" class="item-cantidad" min="0" step="1" value="${item ? item.cantidad : 1}">
+    <button type="button" title="Quitar ítem">✕</button>`;
+  row.querySelector("button").addEventListener("click", () => row.remove());
+  return row;
+}
+
+document.getElementById("btn-agregar-item").addEventListener("click", () => {
+  document.getElementById("items-editor").appendChild(filaItem(null));
+});
+
+function leerItemsDelEditor() {
+  return Array.from(document.querySelectorAll("#items-editor .item-row"))
+    .map((row) => ({
+      nombre: row.querySelector(".item-nombre").value.trim(),
+      cantidad: parseInt(row.querySelector(".item-cantidad").value, 10) || 0
+    }))
+    .filter((it) => it.nombre);
+}
+
 function abrirModalCaja(caja) {
   poblarSelectPilas();
   document.getElementById("modal-caja-titulo").textContent = caja ? "Editar caja" : "Nueva caja";
@@ -156,6 +208,16 @@ function abrirModalCaja(caja) {
   document.getElementById("caja-nivel").value = caja && caja.nivel ? caja.nivel : "";
   document.getElementById("caja-ubicacion").value = caja ? caja.ubicacion || "" : "";
   document.getElementById("caja-contenido").value = caja ? caja.contenido || "" : "";
+
+  const editor = document.getElementById("items-editor");
+  editor.innerHTML = "";
+  const items = caja && Array.isArray(caja.items) ? caja.items : [];
+  if (items.length) {
+    items.forEach((it) => editor.appendChild(filaItem(it)));
+  } else {
+    editor.appendChild(filaItem(null));
+  }
+
   modalCaja.classList.add("open");
 }
 
@@ -180,6 +242,7 @@ document.getElementById("modal-caja-guardar").addEventListener("click", () => {
     nivel: nivelVal ? parseInt(nivelVal, 10) : null,
     ubicacion: document.getElementById("caja-ubicacion").value.trim(),
     contenido: document.getElementById("caja-contenido").value.trim(),
+    items: leerItemsDelEditor(),
     actualizado: firebase.firestore.FieldValue.serverTimestamp()
   };
 
@@ -234,10 +297,10 @@ function renderListaPilasAdmin() {
       <div class="pila-admin-row" data-id="${p.id}">
         <span class="pila-admin-nombre">${p.nombre}</span>
         <div class="pila-admin-pos">
-          <label>Col <input type="number" min="1" max="6" class="pos-col" value="${p.col || 1}"></label>
-          <label>Fila <input type="number" min="1" max="8" class="pos-row" value="${p.row || 1}"></label>
-          <label>Ancho <input type="number" min="1" max="6" class="pos-w" value="${p.w || 1}"></label>
-          <label>Alto <input type="number" min="1" max="8" class="pos-h" value="${p.h || 1}"></label>
+          <label>Col <input type="number" min="1" max="5" class="pos-col" value="${p.col || 1}"></label>
+          <label>Fila <input type="number" min="1" max="6" class="pos-row" value="${p.row || 1}"></label>
+          <label>Ancho <input type="number" min="1" max="5" class="pos-w" value="${p.w || 1}"></label>
+          <label>Alto <input type="number" min="1" max="6" class="pos-h" value="${p.h || 1}"></label>
         </div>
         <button class="pila-eliminar" data-id="${p.id}">Eliminar</button>
       </div>`
@@ -265,9 +328,9 @@ document.getElementById("lista-pilas-admin").addEventListener("click", (e) => {
   const aviso = enUso
     ? `Hay cajas asignadas a "${pila.nombre}". Si la eliminas, esas cajas quedan sin pila. ¿Eliminar igual?`
     : `¿Eliminar la pila "${pila.nombre}"?`;
-  if (confirm(aviso)) {
-    db.collection("pilas").doc(btn.dataset.id).delete().then(() => toast("Pila eliminada"));
-  }
+  pedirConfirmacion(aviso).then((ok) => {
+    if (ok) db.collection("pilas").doc(btn.dataset.id).delete().then(() => toast("Pila eliminada"));
+  });
 });
 
 // ============================================================================
@@ -288,10 +351,10 @@ function renderPlano() {
       const cajasPila = cajas.filter((c) => c.pilaId === p.id);
       const algunMatch = term ? cajasPila.some((c) => cajaCoincide(c, term)) : false;
       const dim = term && !algunMatch;
-      const col = Math.min(6, Math.max(1, p.col || 1));
-      const row = Math.min(8, Math.max(1, p.row || 1));
-      const w = Math.max(1, Math.min(7 - col, p.w || 1));
-      const h = Math.max(1, Math.min(9 - row, p.h || 1));
+      const col = Math.min(5, Math.max(1, p.col || 1));
+      const row = Math.min(6, Math.max(1, p.row || 1));
+      const w = Math.max(1, Math.min(6 - col, p.w || 1));
+      const h = Math.max(1, Math.min(7 - row, p.h || 1));
       return `
         <div class="plano-tile ${term && algunMatch ? "match" : ""} ${dim ? "dim" : ""}"
              style="grid-column:${col} / span ${w}; grid-row:${row} / span ${h}; background:${colorPila(i)};"
@@ -323,7 +386,17 @@ function renderMapa() {
 
   const bloques = [];
 
-  pilas.forEach((pila) => {
+  // Si hay búsqueda, mostramos primero las pilas que tienen alguna coincidencia
+  // (así no hay que bajar por todas las pilas para llegar a la que buscas).
+  const pilasOrdenadas = term
+    ? [...pilas].sort((a, b) => {
+        const matchA = cajas.some((c) => c.pilaId === a.id && cajaCoincide(c, term)) ? 0 : 1;
+        const matchB = cajas.some((c) => c.pilaId === b.id && cajaCoincide(c, term)) ? 0 : 1;
+        return matchA - matchB;
+      })
+    : pilas;
+
+  pilasOrdenadas.forEach((pila) => {
     const cajasPila = cajas.filter((c) => c.pilaId === pila.id);
     const maxNivel = Math.max(1, ...cajasPila.map((c) => c.nivel || 1));
     const algunMatch = term ? cajasPila.some((c) => cajaCoincide(c, term)) : true;
@@ -397,41 +470,185 @@ document.getElementById("buscar-mapa").addEventListener("input", () => {
 // ============================================================================
 // MOVIMIENTOS
 // ============================================================================
-function setTipoMov(tipo) {
-  tipoMovActual = tipo;
-  document.getElementById("btn-retiro").classList.toggle("on", tipo === "retiro");
-  document.getElementById("btn-devolucion").classList.toggle("on", tipo === "devolucion");
+
+// ---------------------------------------------------------------- Selects de caja/ítem
+function poblarSelectCajaMov() {
+  const sel = document.getElementById("mov-caja");
+  const actual = sel.value;
+  sel.innerHTML =
+    `<option value="">Selecciona una caja…</option>` +
+    cajas.map((c) => `<option value="${c.id}">${c.numero ? c.numero + " - " : ""}${c.nombre || "Sin nombre"}</option>`).join("");
+  sel.value = actual;
 }
 
-document.getElementById("btn-retiro").addEventListener("click", () => setTipoMov("retiro"));
-document.getElementById("btn-devolucion").addEventListener("click", () => setTipoMov("devolucion"));
+function poblarSelectItemMov() {
+  const selCaja = document.getElementById("mov-caja");
+  const selItem = document.getElementById("mov-item");
+  const caja = cajas.find((c) => c.id === selCaja.value);
+  const items = caja && Array.isArray(caja.items) ? caja.items.filter((it) => it.cantidad > 0) : [];
 
-document.getElementById("mov-guardar").addEventListener("click", () => {
+  if (!caja) {
+    selItem.innerHTML = `<option value="">Elige primero una caja</option>`;
+    selItem.disabled = true;
+    return;
+  }
+  if (!items.length) {
+    selItem.innerHTML = `<option value="">Esta caja no tiene ítems con stock</option>`;
+    selItem.disabled = true;
+    return;
+  }
+  selItem.disabled = false;
+  selItem.innerHTML = items.map((it) => `<option value="${it.nombre}">${it.nombre} (quedan ${it.cantidad})</option>`).join("");
+}
+
+document.getElementById("mov-caja").addEventListener("change", poblarSelectItemMov);
+
+// ---------------------------------------------------------------- Ajustar stock de una caja (transacción)
+function ajustarStockCaja(cajaId, nombreItem, delta) {
+  const ref = db.collection("cajas").doc(cajaId);
+  return db.runTransaction(async (tx) => {
+    const doc = await tx.get(ref);
+    if (!doc.exists) throw new Error("La caja ya no existe");
+    const items = Array.isArray(doc.data().items) ? [...doc.data().items] : [];
+    const idx = items.findIndex((it) => it.nombre === nombreItem);
+    if (idx === -1) throw new Error("Ese ítem ya no está en la caja");
+    const nuevaCantidad = (items[idx].cantidad || 0) + delta;
+    if (nuevaCantidad < 0) throw new Error("No hay suficiente stock de ese ítem en la caja");
+    items[idx] = { ...items[idx], cantidad: nuevaCantidad };
+    tx.update(ref, { items });
+  });
+}
+
+// ---------------------------------------------------------------- Registrar retiro nuevo
+document.getElementById("mov-guardar").addEventListener("click", async () => {
+  const registradoPor = document.getElementById("mov-registrador").value.trim();
   const persona = document.getElementById("mov-persona").value.trim();
-  const detalle = document.getElementById("mov-detalle").value.trim();
-  const cajaRef = document.getElementById("mov-caja").value.trim();
+  const cajaId = document.getElementById("mov-caja").value;
+  const itemNombre = document.getElementById("mov-item").value;
+  const cantidad = parseInt(document.getElementById("mov-cantidad").value, 10);
 
-  if (!persona || !detalle) {
-    toast("Falta el nombre o el detalle del movimiento");
+  if (!registradoPor || !persona || !cajaId || !itemNombre || !cantidad || cantidad < 1) {
+    toast("Completa vestuarista, persona, caja, ítem y cantidad");
     return;
   }
 
-  db.collection("movimientos")
-    .add({
+  const caja = cajas.find((c) => c.id === cajaId);
+  const cajaLabel = caja ? `${caja.numero ? caja.numero + " - " : ""}${caja.nombre || ""}` : "";
+
+  try {
+    await ajustarStockCaja(cajaId, itemNombre, -cantidad);
+    await db.collection("movimientos").add({
+      registradoPor,
       persona,
-      detalle,
-      caja: cajaRef,
-      tipo: tipoMovActual,
+      cajaId,
+      cajaLabel,
+      itemNombre,
+      cantidad,
+      cantidadPendiente: cantidad,
+      tipo: "retiro",
+      estado: "pendiente",
+      historial: [],
       timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    })
-    .then(() => {
-      toast("Movimiento registrado");
-      document.getElementById("mov-persona").value = "";
-      document.getElementById("mov-detalle").value = "";
-      document.getElementById("mov-caja").value = "";
     });
+    toast("Retiro registrado");
+    document.getElementById("mov-persona").value = "";
+    document.getElementById("mov-cantidad").value = "";
+  } catch (e) {
+    toast(e.message || "No se pudo registrar el movimiento");
+  }
 });
 
+// ---------------------------------------------------------------- Modal resolver (devolución / traspaso)
+const modalResolver = document.getElementById("modal-resolver");
+let resolverTipoActual = "devolucion";
+
+function setResolverTipo(tipo) {
+  resolverTipoActual = tipo;
+  document.getElementById("resolver-btn-devolver").classList.toggle("on", tipo === "devolucion");
+  document.getElementById("resolver-btn-traspaso").classList.toggle("on", tipo === "traspaso");
+  document.getElementById("resolver-persona-destino-wrap").style.display = tipo === "traspaso" ? "block" : "none";
+}
+document.getElementById("resolver-btn-devolver").addEventListener("click", () => setResolverTipo("devolucion"));
+document.getElementById("resolver-btn-traspaso").addEventListener("click", () => setResolverTipo("traspaso"));
+
+function abrirModalResolver(movimiento) {
+  document.getElementById("resolver-mov-id").value = movimiento.id;
+  document.getElementById("resolver-cantidad").value = movimiento.cantidadPendiente;
+  document.getElementById("resolver-cantidad").max = movimiento.cantidadPendiente;
+  document.getElementById("resolver-persona-destino").value = "";
+  document.getElementById("resolver-registrador").value = "";
+  setResolverTipo("devolucion");
+  modalResolver.classList.add("open");
+}
+
+document.getElementById("resolver-cancelar").addEventListener("click", () => modalResolver.classList.remove("open"));
+modalResolver.addEventListener("click", (e) => {
+  if (e.target === modalResolver) modalResolver.classList.remove("open");
+});
+
+document.getElementById("resolver-guardar").addEventListener("click", async () => {
+  const movId = document.getElementById("resolver-mov-id").value;
+  const movimiento = movimientos.find((m) => m.id === movId);
+  const cantidad = parseInt(document.getElementById("resolver-cantidad").value, 10);
+  const registrador = document.getElementById("resolver-registrador").value.trim();
+  const personaDestino = document.getElementById("resolver-persona-destino").value.trim();
+
+  if (!movimiento) return;
+  if (!registrador) {
+    toast("Falta el nombre del vestuarista que registra el cambio");
+    return;
+  }
+  if (!cantidad || cantidad < 1 || cantidad > movimiento.cantidadPendiente) {
+    toast(`La cantidad debe ser entre 1 y ${movimiento.cantidadPendiente}`);
+    return;
+  }
+  if (resolverTipoActual === "traspaso" && !personaDestino) {
+    toast("Falta el nombre de quien recibe la prenda");
+    return;
+  }
+
+  const nuevoPendiente = movimiento.cantidadPendiente - cantidad;
+  const nuevoEstado = nuevoPendiente === 0 ? "devuelto" : "parcial";
+  const entradaHistorial =
+    resolverTipoActual === "devolucion"
+      ? { tipo: "devolucion", cantidad, registradoPor: registrador, fecha: new Date().toISOString() }
+      : { tipo: "traspaso", cantidad, hacia: personaDestino, registradoPor: registrador, fecha: new Date().toISOString() };
+
+  try {
+    if (resolverTipoActual === "devolucion") {
+      await ajustarStockCaja(movimiento.cajaId, movimiento.itemNombre, cantidad);
+    }
+
+    await db.collection("movimientos").doc(movId).update({
+      cantidadPendiente: nuevoPendiente,
+      estado: nuevoEstado,
+      historial: firebase.firestore.FieldValue.arrayUnion(entradaHistorial)
+    });
+
+    if (resolverTipoActual === "traspaso") {
+      await db.collection("movimientos").add({
+        registradoPor: registrador,
+        persona: personaDestino,
+        cajaId: movimiento.cajaId,
+        cajaLabel: movimiento.cajaLabel,
+        itemNombre: movimiento.itemNombre,
+        cantidad,
+        cantidadPendiente: cantidad,
+        tipo: "retiro",
+        estado: "pendiente",
+        historial: [{ tipo: "traspaso-recibido", cantidad, desde: movimiento.persona, registradoPor: registrador, fecha: new Date().toISOString() }],
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }
+
+    toast("Movimiento actualizado");
+    modalResolver.classList.remove("open");
+  } catch (e) {
+    toast(e.message || "No se pudo actualizar el movimiento");
+  }
+});
+
+// ---------------------------------------------------------------- Render historial
 function renderMovimientos() {
   const lista = document.getElementById("lista-movimientos");
   document.getElementById("conteo-mov").textContent = movimientos.length;
@@ -442,19 +659,41 @@ function renderMovimientos() {
   }
 
   lista.innerHTML = movimientos
-    .map(
-      (m) => `
+    .map((m) => {
+      const estado = m.estado || "pendiente";
+      const historialHtml = (m.historial || [])
+        .map((h) => {
+          if (h.tipo === "devolucion") return `<div>↩ Devolvió ${h.cantidad} · registró ${h.registradoPor} · ${h.fecha ? new Date(h.fecha).toLocaleDateString("es-CL") : ""}</div>`;
+          if (h.tipo === "traspaso") return `<div>➜ Se lo pasó a ${h.hacia} (${h.cantidad}) · registró ${h.registradoPor} · ${h.fecha ? new Date(h.fecha).toLocaleDateString("es-CL") : ""}</div>`;
+          if (h.tipo === "traspaso-recibido") return `<div>⇐ Recibido de ${h.desde} (${h.cantidad})</div>`;
+          return "";
+        })
+        .join("");
+
+      return `
       <div class="mov-item">
         <div class="mov-dot ${m.tipo}"></div>
         <div class="mov-body">
-          <div class="persona">${m.persona}${m.caja ? ` · caja ${m.caja}` : ""}</div>
-          <div class="detalle">${m.tipo === "retiro" ? "Se llevó" : "Devolvió"}: ${m.detalle}</div>
+          <div class="persona">
+            ${m.persona} · ${m.cantidad} ${m.itemNombre}
+            <span class="estado-badge ${estado}">${estado}</span>
+          </div>
+          <div class="detalle">Caja: ${m.cajaLabel || "—"} · registró ${m.registradoPor || "—"}</div>
           <div class="fecha">${fechaLegible(m.timestamp)}</div>
+          ${historialHtml ? `<div class="mov-sub-historial">${historialHtml}</div>` : ""}
+          ${estado !== "devuelto" ? `<button class="btn-resolver" data-id="${m.id}">Actualizar (devolvió / traspasó)</button>` : ""}
         </div>
-      </div>`
-    )
+      </div>`;
+    })
     .join("");
 }
+
+document.getElementById("lista-movimientos").addEventListener("click", (e) => {
+  const btn = e.target.closest(".btn-resolver");
+  if (!btn) return;
+  const movimiento = movimientos.find((m) => m.id === btn.dataset.id);
+  if (movimiento) abrirModalResolver(movimiento);
+});
 
 // ============================================================================
 // LISTENERS FIRESTORE (tiempo real)
@@ -467,6 +706,8 @@ db.collection("cajas")
       renderCajas();
       renderMapa();
       renderPlano();
+      poblarSelectCajaMov();
+      poblarSelectItemMov();
     },
     (err) => {
       console.error(err);
