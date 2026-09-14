@@ -722,6 +722,7 @@ main {
 .items-editor { display: flex; flex-direction: column; gap: 8px; }
 .item-row { display: flex; gap: 8px; align-items: center; }
 .item-row input[type="text"] { flex: 1; }
+.item-row select { flex: 1; background: var(--bg-elev-2); border: 1px solid var(--line); border-radius: 9px; color: var(--text); padding: 9px 10px; font-size: 13.5px; font-family: inherit; }
 .item-row input[type="number"] { width: 64px; }
 .item-row button {
   background: none;
@@ -757,6 +758,12 @@ main {
 
 /* ---------- Movimientos: estado y resolver ---------- */
 .mov-body .persona { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.mov-item-linea {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--line);
+}
+.mov-item-linea:first-of-type { border-top: none; margin-top: 6px; padding-top: 0; }
 .estado-badge {
   font-size: 10.5px;
   font-weight: 700;
